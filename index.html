@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+<link rel="stylesheet"
+		  type="text/css"
+		  href="bootstrap.css"
+	      />
+        <link rel="stylesheet"
+  type="text/css"
+  href="styles.css"
+    />
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+        section {
+            padding: 20px;
+        }
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .task {
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            padding: 10px;
+        }
+        .task h3 {
+            margin-top: 0;
+        }
+        .task p {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>Task Manager</h1>
+        </header>
+        <section>
+            <h2>Dashboard</h2>
+            <div>
+                <input type="text" v-model="search" placeholder="Search...">
+            </div>
+            <div v-if="filteredTasks.length === 0">
+                No tasks found.
+            </div>
+            <div v-else>
+                <h3>Upcoming Tasks</h3>
+                <div v-for="task in filteredTasks" :key="task.id" v-if="!task.completed && !isOverdue(task)">
+                    <div class="task">
+                        <h3>{{ task.title }}</h3>
+                        <p>Description: {{ task.description }}</p>
+                        <p>Due Date: {{ task.dueDate }}</p>
+                        <p>Priority: {{ task.priority }}</p>
+                        <p>Status: Incomplete</p>
+                        <button @click="deleteTask(task.id)">Delete</button>
+                        <button @click="toggleComplete(task.id)">Complete</button>
+                    </div>
+                </div>
+                <h3>Overdue Tasks</h3>
+                <div v-for="task in filteredTasks" :key="task.id" v-if="!task.completed && isOverdue(task)">
+                    <div class="task">
+                        <h3>{{ task.title }}</h3>
+                        <p>Description: {{ task.description }}</p>
+                        <p>Due Date: {{ task.dueDate }}</p>
+                        <p>Priority: {{ task.priority }}</p>
+                        <p>Status: Incomplete (Overdue)</p>
+                        <button @click="deleteTask(task.id)">Delete</button>
+                        <button @click="toggleComplete(task.id)">Complete</button>
+                    </div>
+                </div>
+                <h3>Completed Tasks</h3>
+                <div v-for="task in filteredTasks" :key="task.id" v-if="task.completed">
+                    <div class="task">
+                        <h3>{{ task.title }}</h3>
+                        <p>Description: {{ task.description }}</p>
+                        <p>Due Date: {{ task.dueDate }}</p>
+                        <p>Priority: {{ task.priority }}</p>
+                        <p>Status: Completed</p>
+                        <button @click="deleteTask(task.id)">Delete</button>
+                        <button @click="toggleComplete(task.id)">Undo</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section>
+            <h2>Task Management</h2>
+            <input type="text" v-model="newTask.title" placeholder="Title">
+            <textarea v-model="newTask.description" placeholder="Description"></textarea>
+            <input type="date" v-model="newTask.dueDate">
+            <select v-model="newTask.priority">
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+            </select>
+            <button @click="addTask">Add Task</button>
+        </section>
+    </div>
+<script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                tasks: [
+                    { id: 1, title: 'Task 1', description: 'Description for Task 1', dueDate: '2024-04-05', priority: 'High', completed: false },
+                    { id: 2, title: 'Task 2', description: 'Description for Task 2', dueDate: '2024-04-08', priority: 'Medium', completed: false },
+                    { id: 3, title: 'Task 3', description: 'Description for Task 3', dueDate: '2024-04-01', priority: 'Low', completed: true }
+                ],
+                newTask: { title: '', description: '', dueDate: '', priority: 'High' },
+                search: ''
+            },
+            computed: {
+                filteredTasks() {
+                    return this.tasks.filter(task =>
+                        task.title.toLowerCase().includes(this.search.toLowerCase()) ||
+                        task.description.toLowerCase().includes(this.search.toLowerCase())
+                    );
+                }
+            },
+            methods: {
+                addTask() {
+                    if (this.newTask.title && this.newTask.description && this.newTask.dueDate) {
+                        this.tasks.push({ ...this.newTask, id: this.tasks.length + 1, completed: false });
+                        this.newTask = { title: '', description: '', dueDate: '', priority: 'High' };
+                    } else {
+                        alert('Please fill in all fields.');
+                    }
+                },
+                deleteTask(id) {
+                    this.tasks = this.tasks.filter(task => task.id !== id);
+                },
+                toggleComplete(id) {
+                    this.tasks = this.tasks.map(task => task.id === id ? { ...task, completed: !task.completed } : task);
+                },
+                isOverdue(task) {
+                    const today = new Date();
+                    const dueDate = new Date(task.dueDate);
+                    return !task.completed && dueDate < today;
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>
